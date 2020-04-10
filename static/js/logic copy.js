@@ -1,7 +1,7 @@
-var earthquakeurl =
+var earthquakeData =
   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-var plates = "static/js/tectonic_plates.json";
-// "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
+var platesurl =
+  "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
 
 // Define a markerSize function that will give each city a different radius based on its population
 function markerSize(mag) {
@@ -27,34 +27,14 @@ function getColor(d) {
 var earthquakeCircles = [];
 var platesLine = [];
 
-d3.json(earthquakeurl, function (data) {
-  // Once we get a response, send the earthquakeData object to the createFeatures function
-  createFeatures(data.features);
-});
-
-d3.json(plates, function (data) {
+d3.json(earthquakeData, function (data) {
   console.log(data);
-});
 
-function createFeatures(earthquakeData) {
-  function onEachFeature(feature, layer) {
-    layer.bindPopup(
-      "<h1>" +
-        earthquakeData[i].properties.place +
-        "</h1>" +
-        "<hr>" +
-        "<h3>Magnitude: " +
-        earthquakeData[i].properties.mag +
-        "</h3>"
-    );
-  }
-
-  // Create a GeoJSON layer containing the features array on the earthquakeData object
-  // Run the onEachFeature function once for each piece of data in the array
-  for (var i = 0; i < earthquakeData.length; i++) {
+  // Create circles and add data to earthquakeCircles list
+  for (var i = 0; i < data.features.length; i++) {
     var location = [
-      earthquakeData[i].geometry.coordinates[1],
-      earthquakeData[i].geometry.coordinates[0],
+      data.features[i].geometry.coordinates[1],
+      data.features[i].geometry.coordinates[0],
     ];
 
     earthquakeCircles.push(
@@ -63,30 +43,19 @@ function createFeatures(earthquakeData) {
         fillOpacity: 1,
         color: "black",
         weight: 1,
-        fillColor: getColor(earthquakeData[i].properties.mag),
-        radius: markerSize(earthquakeData[i].properties.mag),
+        fillColor: getColor(data.features[i].properties.mag),
+        radius: markerSize(data.features[i].properties.mag),
       }).bindPopup(
         "<h1>" +
-          earthquakeData[i].properties.place +
+          data.features[i].properties.place +
           "</h1>" +
           "<hr>" +
           "<h3>Magnitude: " +
-          earthquakeData[i].properties.mag +
+          data.features[i].properties.mag +
           "</h3>"
       )
     );
   }
-
-  // var earthquakes = L.geoJSON(earthquakeData, {
-  //   onEachFeature: onEachFeature,
-  // });
-
-  // Sending our earthquakes layer to the createMap function
-  createMap(earthquakeCircles);
-}
-
-function createMap(earthquakeCircles) {
-  // Create circles and add data to earthquakeCircles list
 
   // Create tiles
   var satellite = L.tileLayer(
@@ -132,14 +101,14 @@ function createMap(earthquakeCircles) {
 
   // var platesLayer = L.layerGroup();
 
-  // var plates = L.geoJSON(platesurl);
+  var plates = L.geoJSON(platesurl);
   // d3.json(platesurl, function (data) {
   //   console.log(data);
 
-  //   // for (var i = 0; i < earthquakeData.length; i++) {
+  //   // for (var i = 0; i < data.features.length; i++) {
   //   //   var location = [
-  //   //     earthquakeData[i].geometry.coordinates[i][1],
-  //   //     earthquakeData[i].geometry.coordinates[i][0],
+  //   //     data.features[i].geometry.coordinates[i][1],
+  //   //     data.features[i].geometry.coordinates[i][0],
   //   //   ];
   //   //   console.log(location);
   //   //   platesLine.push(
@@ -161,7 +130,6 @@ function createMap(earthquakeCircles) {
   // L.geoJSON(platesurl).addTo(platesLayer);
 
   var platesLayer = L.layerGroup(platesLine);
-
   // Overlays that may be toggled on or off
   var overlayMaps = {
     Earthquake: earthquakeLayer,
@@ -193,4 +161,4 @@ function createMap(earthquakeCircles) {
     return div;
   };
   legend.addTo(myMap);
-}
+});
