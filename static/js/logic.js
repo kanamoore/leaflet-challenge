@@ -1,11 +1,16 @@
 var earthquakeurl =
   "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson";
-var plates = "static/js/tectonic_plates.json";
-// "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_plates.json";
+var platesjson = "static/js/tectonic_plates.json";
 
 // Define a markerSize function that will give each city a different radius based on its population
 function markerSize(mag) {
   return mag * 20000;
+}
+
+// Create a function to covert timestamp to date
+function covertTimestamp(time) {
+  var date = new Date(time).toLocaleDateString("en-US");
+  return date;
 }
 
 // Define color function to change circle color
@@ -25,29 +30,13 @@ function getColor(d) {
 
 // Create an empty list to hold earthquake circle data
 var earthquakeCircles = [];
-var platesLine = [];
 
 d3.json(earthquakeurl, function (data) {
-  // Once we get a response, send the earthquakeData object to the createFeatures function
   createFeatures(data.features);
 });
 
-d3.json(plates, function (data) {
-  console.log(data);
-});
-
 function createFeatures(earthquakeData) {
-  function onEachFeature(feature, layer) {
-    layer.bindPopup(
-      "<h1>" +
-        earthquakeData[i].properties.place +
-        "</h1>" +
-        "<hr>" +
-        "<h3>Magnitude: " +
-        earthquakeData[i].properties.mag +
-        "</h3>"
-    );
-  }
+  console.log(earthquakeData);
 
   // Create a GeoJSON layer containing the features array on the earthquakeData object
   // Run the onEachFeature function once for each piece of data in the array
@@ -72,22 +61,20 @@ function createFeatures(earthquakeData) {
           "<hr>" +
           "<h3>Magnitude: " +
           earthquakeData[i].properties.mag +
+          "</h3>" +
+          // "<br>" +
+          "<h3>Date: " +
+          covertTimestamp(earthquakeData[i].properties.time) +
           "</h3>"
       )
     );
   }
-
-  // var earthquakes = L.geoJSON(earthquakeData, {
-  //   onEachFeature: onEachFeature,
-  // });
 
   // Sending our earthquakes layer to the createMap function
   createMap(earthquakeCircles);
 }
 
 function createMap(earthquakeCircles) {
-  // Create circles and add data to earthquakeCircles list
-
   // Create tiles
   var satellite = L.tileLayer(
     "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}",
@@ -128,39 +115,19 @@ function createMap(earthquakeCircles) {
     Outdoors: outdoors,
   };
 
+  // Add layers group
   var earthquakeLayer = L.layerGroup(earthquakeCircles);
+  var platesLayer = L.layerGroup();
 
-  // var platesLayer = L.layerGroup();
-
-  // var plates = L.geoJSON(platesurl);
-  // d3.json(platesurl, function (data) {
-  //   console.log(data);
-
-  //   // for (var i = 0; i < earthquakeData.length; i++) {
-  //   //   var location = [
-  //   //     earthquakeData[i].geometry.coordinates[i][1],
-  //   //     earthquakeData[i].geometry.coordinates[i][0],
-  //   //   ];
-  //   //   console.log(location);
-  //   //   platesLine.push(
-  //   //     new L.Polyline(location, {
-  //   //       color: "red",
-  //   //       weight: 3,
-  //   //       opacity: 0.5,
-  //   //       smoothFactor: 1,
-  //   //     })
-  //   //   );
-  //   // L.geoJSON(platesData, {
-  //   //   style: {
-  //   //     color: "orange",
-  //   //   },
-  //   // });
-  //   // })
-  // });
-
-  // L.geoJSON(platesurl).addTo(platesLayer);
-
-  var platesLayer = L.layerGroup(platesLine);
+  // Add plates data to plates layer
+  d3.json(platesjson, function (data) {
+    L.geoJSON(data, {
+      style: {
+        color: "orange",
+        fillOpacity: 0,
+      },
+    }).addTo(platesLayer);
+  });
 
   // Overlays that may be toggled on or off
   var overlayMaps = {
@@ -169,9 +136,9 @@ function createMap(earthquakeCircles) {
   };
 
   var myMap = L.map("map", {
-    center: [34.0522, -118.2437],
-    zoom: 4,
-    layers: [streets, earthquakeLayer, platesLayer],
+    center: [44.9778, -93.265],
+    zoom: 5,
+    layers: [streets, earthquakeLayer],
   });
 
   L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(myMap);
